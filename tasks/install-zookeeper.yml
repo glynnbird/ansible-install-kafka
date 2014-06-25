@@ -1,0 +1,25 @@
+- name: Download Zookeeper {{ zookeeper_version }}
+  get_url: url=http://mirror.ox.ac.uk/sites/rsync.apache.org/zookeeper/zookeeper-{{ zookeeper_version }}/zookeeper-{{ zookeeper_version }}.tar.gz dest=/tmp/zookeeper-{{ zookeeper_version }}.tar.gz mode=0644 force=no
+  
+- name: Unpack the tar
+  shell: tar -xzvf /tmp/zookeeper-{{ zookeeper_version }}.tar.gz chdir=/tmp/ creates=/tmp/zookeeper-{{ zookeeper_version }}
+  
+- name: Copy configuration over
+  copy: src=conf/zoo.cfg dest=/tmp/zookeeper-{{ zookeeper_version }}/conf/ mode=0644
+  
+- name: Copy zookeeper to real destination
+  shell: mv /tmp/zookeeper-{{ zookeeper_version }} /usr/local/zookeeper-{{ zookeeper_version }} creates=/usr/local/zookeeper-{{ zookeeper_version }}
+  
+- name: Link /usr/local/zookeeper to this version
+  shell: ln -s zookeeper-{{ zookeeper_version }} zookeeper chdir=/usr/local creates=/usr/local/zookeeper
+  
+- name: Install the Zookeeper service handler
+  copy: src=init.d/zookeeper dest=/etc/init.d/ mode=0755
+
+- name: Run the Zookeeper service
+  service: name=zookeeper state=started enabled=yes
+  
+  
+  
+
+

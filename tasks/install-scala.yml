@@ -1,0 +1,6 @@
+- name: Download scala-{{ scala_version }}
+  get_url: url=http://www.scala-lang.org/files/archive/scala-{{ scala_version }}.deb dest=/tmp/scala-{{ scala_version }}.deb mode=0644 force=no
+  
+- name: Install Scala {{ scala_version }}
+  apt: deb=/tmp/scala-{{ scala_version }}.deb state=installed 
+

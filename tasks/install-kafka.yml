@@ -1,0 +1,34 @@
+
+- name: Download Kafka {{ kafka_version }}
+  get_url: url=http://www.mirrorservice.org/sites/ftp.apache.org/kafka/{{ kafka_version }}/kafka-{{ kafka_version }}-src.tgz dest=/tmp/kafka-{{ kafka_version }}-src.tar.gz mode=0644 force=no
+  
+- name: Unpack the tar
+  shell: tar -xzvf /tmp/kafka-{{ kafka_version }}-src.tar.gz chdir=/tmp/ creates=/tmp/kafka-{{ kafka_version }}-src
+  
+- name: run SBT update
+  shell: sbt update chdir=/tmp/kafka-{{ kafka_version }}-src creates=/usr/local/kafa-{{ kafka_version }}
+
+- name: run SBT package
+  shell: sbt package chdir=/tmp/kafka-{{ kafka_version }}-src creates=/usr/local/kafa-{{ kafka_version }}
+  
+- name: Copy Kafka into place
+  shell: mv /tmp/kafka-{{ kafka_version }}-src /usr/local/kafa-{{ kafka_version }} creates=/usr/local/kafa-{{ kafka_version }}
+  
+- name: Symlink /usr/local/kafka to this version
+  shell: ln -s kafa-{{ kafka_version }} kafka chdir=/usr/local creates=/usr/local/kafka
+  
+- name: Switch Scala version numbers
+  replace: dest=/usr/local/kafka/gradle.properties regexp='^scalaVersion=.*$' replace='scalaVersion={{ scala_version }}'
+  
+- name: Run Gradle to build Kafka
+  shell: ./gradlew jar chdir=/usr/local/kafka creates=/usr/local/kafka/core/build/
+  
+- name: Install the Kafka service handler
+  copy: src=init.d/kafka dest=/etc/init.d/ mode=0755
+  
+- name: Switch Scala version numbers in service handler
+  replace: dest=/etc/init.d/kafka regexp='^export SCALA_VERSION=.*$' replace='export SCALA_VERSION={{ scala_version }}'
+
+- name: Run the kafka service
+  service: name=kafka state=started enabled=yes
+  
